@@ -1,0 +1,62 @@
+name: Message Service CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Run Tests
+        run: mvn test
+
+  build-and-deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # Byt namn till något lämpligt, t.ex. journal-system-msg-service
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/journal-system-msg-service:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/journal-system-msg-service:latest
+
+      - name: Trigger Redeploy in KTH Cloud
+        run: |
+          # Avkommentera och fyll i ID när du skapat deploymenten
+          # curl -X POST "https://api.cloud.cbh.kth.se/deploy/v2/deployments/DITT_MSG_ID/command" \
+          # -H "X-Api-Key: ${{ secrets.KTH_CLOUD_API_KEY }}" \
+          # -H "Content-Type: application/json" \
+          # -d '{"command": "restart"}'
+          echo "Redeploy step skipped"
