@@ -47,16 +47,13 @@ jobs:
         with:
           context: .
           push: true
-          # Byt namn till något lämpligt, t.ex. journal-system-msg-service
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/journal-system-msg-service:${{ github.sha }}
             ${{ secrets.DOCKERHUB_USERNAME }}/journal-system-msg-service:latest
 
       - name: Trigger Redeploy in KTH Cloud
         run: |
-          # Avkommentera och fyll i ID när du skapat deploymenten
-          # curl -X POST "https://api.cloud.cbh.kth.se/deploy/v2/deployments/DITT_MSG_ID/command" \
-          # -H "X-Api-Key: ${{ secrets.KTH_CLOUD_API_KEY }}" \
-          # -H "Content-Type: application/json" \
-          # -d '{"command": "restart"}'
-          echo "Redeploy step skipped"
+          curl -X POST "https://api.cloud.cbh.kth.se/deploy/v2/deployments/37df5554-7f45-4a22-b1b9-1c4a7b12122b/command" \
+            -H "X-Api-Key: ${{ secrets.KTH_CLOUD_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"command": "restart"}'
